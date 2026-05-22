@@ -1,4 +1,4 @@
-﻿﻿/*
+﻿﻿﻿﻿/*
  * Pizzería Campus Express - Gestión de pedidos con Queue y Stack
  * Compatible con SharpDevelop 4.4 / .NET Framework 2.0+
  */
@@ -14,6 +14,7 @@ namespace laboratoriPizzeriaCampusExpress
         // Colecciones principales: FIFO para pedidos, LIFO para bitácora
         private Queue<string> colaPedidos = new Queue<string>();
         private Stack<string> pilaBitacora = new Stack<string>();
+        private Queue<string> pedidoPremium = new Queue<string>();
 
         public MainForm()
         {
@@ -48,16 +49,7 @@ namespace laboratoriPizzeriaCampusExpress
         // PASO 2: Entregar pedido (FIFO salida)
         private void BtnEntregar_Click(object sender, EventArgs e)
         {
-            if (colaPedidos.Count == 0)
-            {
-                lblEstado.Text = string.Format("❌ No hay pedidos pendientes.");
-                return;
-            }
-
-            string cliente = colaPedidos.Dequeue();
-            pilaBitacora.Push(string.Format("ENTREGADO: {0}", cliente));
-            lblEstado.Text = string.Format("🍕 Pedido entregado a {0}", cliente);
-            ActualizarUI();
+            atenderSiguiente();
         }
 
         // PASO 3: Deshacer última acción (LIFO + lógica de reversión)
@@ -99,6 +91,7 @@ namespace laboratoriPizzeriaCampusExpress
             }
 
             ActualizarUI();
+            atenderSiguiente();
         }
 
         // PASO 4: Limpiar todo (reiniciar sistema)
@@ -108,6 +101,7 @@ namespace laboratoriPizzeriaCampusExpress
             pilaBitacora.Clear();
             lblEstado.Text = string.Format("🧹 Sistema reiniciado.");
             ActualizarUI();
+            atenderSiguiente();
         }
 
         // Sincronizar la interfaz con el estado actual
@@ -132,6 +126,50 @@ namespace laboratoriPizzeriaCampusExpress
             // Actualizar contador
             lblContador.Text = string.Format("Pedidos: {0} | Bitácora: {1}",
                 colaPedidos.Count, pilaBitacora.Count);
+        }
+        private void atenderSiguiente()
+		{
+		    string cliente = "";
+		    string tipoPedido =  "";
+		    
+		    if (pedidoPremium.Count > 0)
+		    {
+		        cliente = pedidoPremium.Dequeue();
+		        tipoPedido = "PREMIUM";
+		    }
+
+		    else if (colaPedidos.Count > 0)
+		    {
+		        cliente = colaPedidos.Dequeue();
+		        tipoPedido = "NORMAL";
+		    }
+		    else
+		    {
+		        lblEstado.Text = "📭 No hay pedidos pendientes en ninguna cola.";
+		        return;
+		    }
+		    
+			string mensajeBitacora = string.Format("ENTREGADO ({0}): {1}", tipoPedido, cliente);
+		    pilaBitacora.Push(mensajeBitacora);
+		    lblEstado.Text = string.Format("🍕 Pedido {0} entregado a {1}", tipoPedido, cliente);
+		    ActualizarUI();
+		}
+        
+        void BtnPedidoPremiumClick(object sender, EventArgs e)
+        {
+        	string cliente = txtCliente.Text.Trim();
+        	if (cliente == "")
+            {
+	            lblEstado.Text = string.Format("⚠ Debe ingresar un nombre de cliente.");
+	            return;
+            }
+		
+		    pedidoPremium.Enqueue(cliente);
+		    pilaBitacora.Push(string.Format("PEDIDO PREMIUM: {0}", cliente));
+		    
+		    txtCliente.Clear();
+		    lblEstado.Text = string.Format(" Pedido de cliente PREMIUM registrado para {0}", cliente);
+		    ActualizarUI();
         }
     }
 }
